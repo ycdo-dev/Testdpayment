@@ -1,0 +1,990 @@
+<!-- Payment Modal -->
+    <div id="payment-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background-color: var(--card-bg); border-radius: 16px; padding: 30px; max-width: 500px; width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 24px; margin: 0;">Complete Your Purchase</h3>
+                <span onclick="closePaymentModal()" style="cursor: pointer; font-size: 24px;">&times;</span>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <p style="margin-bottom: 10px;">Selected Plan: <span id="selected-plan" style="font-weight: bold;"></span></p>
+                <p>Price: <span id="selected-price" style="font-weight: bold;"></span></p>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <p style="margin-bottom: 15px;">Payment Address:</p>
+                <div style="background-color: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; word-break: break-all; font-family: monospace; margin-bottom: 10px;">0xa4a0302260ebE1F9b47A21ba40366e68181B1879</div>
+                <p style="font-size: 14px; color: var(--text-secondary);">Send payment to this address to receive access to your selected plan.</p>
+            </div>
+            
+            <form id="payment-form" style="margin-bottom: 20px;">
+                <input type="hidden" id="plan-input" name="plan">
+                <div style="margin-bottom: 15px;">
+                    <label for="wallet-address" style="display: block; margin-bottom: 5px;">Your Wallet Address</label>
+                    <input type="text" id="wallet-address" style="width: 100%; padding: 10px; border-radius: 8px; background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: var(--text);" placeholder="Enter your wallet address">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="payment-token" style="display: block; margin-bottom: 5px;">Payment Token</label>
+                    <select id="payment-token" style="width: 100%; padding: 10px; border-radius: 8px; background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: var(--text);">
+                        <option value="usdt">USDT</option>
+                        <option value="usdc">USDC</option>
+                        <option value="sol">SOL</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="tx-hash" style="display: block; margin-bottom: 5px;">Transaction Hash (after payment)</label>
+                    <input type="text" id="tx-hash" style="width: 100%; padding: 10px; border-radius: 8px; background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: var(--text);" placeholder="Enter transaction hash">
+                </div>
+            </form>
+            
+            <button onclick="processPayment()" class="cta-button" style="width: 100%;">Submit Payment Information</button>
+        </div>
+    </div><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoonScanner - Premium Solana Signal Group</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #9945FF;
+            --secondary: #14F195;
+            --accent: #00FFA3;
+            --background: #0F172A;
+            --card-bg: #1E293B;
+            --text: #F8FAFC;
+            --text-secondary: #94A3B8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        header {
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo span {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-left: 8px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--secondary);
+        }
+        
+        /* Hero Section */
+        .hero {
+            padding: 80px 0;
+            text-align: center;
+            background: radial-gradient(circle at center, rgba(153, 69, 255, 0.2), transparent 70%);
+        }
+        
+        .hero h1 {
+            font-size: 64px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hero p {
+            font-size: 18px;
+            max-width: 700px;
+            margin: 0 auto 40px;
+            color: var(--text-secondary);
+        }
+        
+        /* CTA Button */
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: #000;
+            font-weight: 600;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 18px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-bottom: 40px;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(153, 69, 255, 0.3);
+        }
+        
+        /* Pricing Plans */
+        .pricing-container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 800px;
+            margin: 0 auto 80px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .pricing-title {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            color: var(--accent);
+            width: 100%;
+        }
+        
+        .pricing-plan {
+            background-color: rgba(15, 23, 42, 0.6);
+            border-radius: 12px;
+            padding: 30px;
+            flex: 1;
+            min-width: 250px;
+            text-align: center;
+            border: 1px solid rgba(153, 69, 255, 0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .pricing-plan:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(153, 69, 255, 0.3);
+            border-color: var(--primary);
+        }
+        
+        .plan-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--text);
+        }
+        
+        .plan-price {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .plan-features {
+            list-style: none;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        
+        .plan-features li {
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+        }
+        
+        .plan-features li i {
+            color: var(--accent);
+            margin-right: 10px;
+        }
+        
+        .popular-badge {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: #000;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 20px;
+            position: absolute;
+            top: -10px;
+            right: 20px;
+        }
+        
+        /* Features */
+        .features {
+            padding: 80px 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 60px;
+            color: var(--text);
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .feature-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            transition: transform 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+        
+        .feature-title {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .feature-description {
+            color: var(--text-secondary);
+        }
+        
+        /* Trust Section */
+        .trust-section {
+            padding: 80px 0;
+            background-color: rgba(30, 41, 59, 0.5);
+        }
+        
+        .trust-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            text-align: center;
+        }
+        
+        .metric {
+            padding: 20px;
+        }
+        
+        .metric-value {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+        
+        /* Testimonials */
+        .testimonials {
+            padding: 80px 0;
+        }
+        
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .testimonial-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            position: relative;
+        }
+        
+        .testimonial-text {
+            font-size: 16px;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+        }
+        
+        .author-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .author-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .author-name {
+            font-weight: 600;
+        }
+        
+        .author-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .quote-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 40px;
+            opacity: 0.1;
+            color: var(--accent);
+        }
+        
+        /* Results Section */
+        .results-section {
+            padding: 80px 0;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .result-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .token-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .token-name i {
+            margin-right: 8px;
+            color: var(--accent);
+        }
+        
+        .profit-percentage {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: #14F195;
+        }
+        
+        .signal-date {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: auto;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--card-bg);
+            padding: 40px 0;
+            margin-top: 80px;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .footer-logo {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .footer-logo span {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .social-links a {
+            color: var(--text-secondary);
+            font-size: 20px;
+            transition: color 0.3s;
+        }
+        
+        .social-links a:hover {
+            color: var(--accent);
+        }
+        
+        /* FAQ Section */
+        .faq-section {
+            padding: 80px 0;
+        }
+        
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .faq-item {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        
+        .faq-question {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .faq-question i {
+            transition: transform 0.3s;
+        }
+        
+        .faq-answer {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s;
+            color: var(--text-secondary);
+        }
+        
+        .faq-item.active .faq-answer {
+            padding: 0 20px 20px;
+            max-height: 500px;
+        }
+        
+        .faq-item.active .faq-question i {
+            transform: rotate(180deg);
+        }
+        
+        /* Floating Elements */
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: -1;
+        }
+        
+        .floating-coin {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at center, var(--primary), var(--secondary));
+            border-radius: 50%;
+            filter: blur(1px);
+            opacity: 0.3;
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            100% {
+                transform: translateY(-1000px) rotate(720deg);
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 42px;
+            }
+            
+            .pricing-plan {
+                min-width: 100%;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating elements -->
+    <div class="floating-elements">
+        <div class="floating-coin" style="left: 10%; top: 20%; animation-duration: 25s;"></div>
+        <div class="floating-coin" style="left: 25%; top: 40%; animation-duration: 20s;"></div>
+        <div class="floating-coin" style="left: 45%; top: 15%; animation-duration: 30s;"></div>
+        <div class="floating-coin" style="left: 65%; top: 35%; animation-duration: 22s;"></div>
+        <div class="floating-coin" style="left: 85%; top: 25%; animation-duration: 28s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav>
+                <a href="#" class="logo">
+                    <i class="fab fa-telegram"></i>
+                    <span>MoonScanner Signals</span>
+                </a>
+                <div class="nav-links">
+                    <a href="#features">Features</a>
+                    <a href="#results">Past Results</a>
+                    <a href="#pricing">Join Now</a>
+                    <a href="#testimonials">Testimonials</a>
+                    <a href="#faq">FAQ</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Premium Solana Signal Group</h1>
+            <p><b>Get exclusive access to our private Telegram group with verified gains and proven track record. Receive real-time signals for Solana meme coins before they pump.</b>
+            <br><br><i>This is not financial advice. Only invest what you can afford to lose. Always do your own research.</i>
+            </p>
+            
+            <a href="#pricing" class="cta-button">
+                <i class="fab fa-telegram"></i> JOIN OUR SIGNAL GROUP
+            </a>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="results-section" id="results">
+        <div class="container">
+            <h2 class="section-title">Our Recent Signals</h2>
+            <div class="results-grid">
+                <div class="result-card">
+                    <div class="token-name">
+                        <i class="fas fa-rocket"></i> GOHOME
+                    </div>
+                    <div class="profit-percentage">+114.23%</div>
+                    <div class="signal-date">Signaled: Mar 12, 2025</div>
+                </div>
+                <div class="result-card">
+                    <div class="token-name">
+                        <i class="fas fa-rocket"></i> TOSHI
+                    </div>
+                    <div class="profit-percentage">+22.63%</div>
+                    <div class="signal-date">Signaled: Mar 5, 2025</div>
+                </div>
+                <div class="result-card">
+                    <div class="token-name">
+                        <i class="fas fa-rocket"></i> TURBO
+                    </div>
+                    <div class="profit-percentage">+10.80%</div>
+                    <div class="signal-date">Signaled: Feb 28, 2025</div>
+                </div>
+                <div class="result-card">
+                    <div class="token-name">
+                        <i class="fas fa-rocket"></i> GIGA
+                    </div>
+                    <div class="profit-percentage">+30.60%</div>
+                    <div class="signal-date">Signaled: Mar 10, 2025</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing-section" id="pricing">
+        <div class="container">
+            <h2 class="section-title">Join Our Signal Group</h2>
+            <div class="pricing-container">
+                <h3 class="pricing-title">Choose Your Membership Plan</h3>
+                
+                <div class="pricing-plan">
+                    <div class="plan-name">Basic</div>
+                    <div class="plan-price">$49<span style="font-size: 16px; opacity: 0.7;">/month</span></div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> Real-time Signals (3-5 per week)</li>
+                        <li><i class="fas fa-check-circle"></i> Entry & Exit Points</li>
+                        <li><i class="fas fa-check-circle"></i> Community Access</li>
+                        <li><i class="fas fa-check-circle"></i> Basic Support</li>
+                        <li><i class="fas fa-times-circle" style="color: #ff6b6b;"></i> Technical Analysis</li>
+                    </ul>
+                    <a href="https://t.me/MoonScannerBasic" class="cta-button" style="width: 100%; margin-bottom: 0;" onclick="showPaymentModal('Basic', 49)">Join Basic</a>
+                </div>
+                
+                <div class="pricing-plan" style="position: relative;">
+                    <div class="popular-badge">MOST POPULAR</div>
+                    <div class="plan-name">Premium</div>
+                    <div class="plan-price">$99<span style="font-size: 16px; opacity: 0.7;">/month</span></div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> Real-time Signals (8-12 per week)</li>
+                        <li><i class="fas fa-check-circle"></i> Entry & Exit Points</li>
+                        <li><i class="fas fa-check-circle"></i> Detailed Technical Analysis</li>
+                        <li><i class="fas fa-check-circle"></i> Private Community Access</li>
+                        <li><i class="fas fa-check-circle"></i> Priority Support</li>
+                    </ul>
+                    <a href="#" class="cta-button" style="width: 100%; margin-bottom: 0;" onclick="showPaymentModal('Premium', 99)">Join Premium</a>
+                </div>
+                
+                <div class="pricing-plan" style="position: relative; border: 2px solid var(--accent);">
+                    <div class="popular-badge" style="background: linear-gradient(90deg, #FFD700, #FFA500);">BEST VALUE</div>
+                    <div class="plan-name">Lifetime VIP</div>
+                    <div class="plan-price">$249<span style="font-size: 16px; opacity: 0.7;">/lifetime</span></div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> All Premium Features</li>
+                        <li><i class="fas fa-check-circle"></i> Early Access to Signals</li>
+                        <li><i class="fas fa-check-circle"></i> 1-on-1 Strategy Sessions</li>
+                        <li><i class="fas fa-check-circle"></i> Portfolio Review</li>
+                        <li><i class="fas fa-check-circle"></i> Private VIP Channel</li>
+                        <li><i class="fas fa-check-circle"></i> Lifetime Updates & Access</li>
+                    </ul>
+                    <a href="#" class="cta-button" style="width: 100%; margin-bottom: 0;" onclick="showPaymentModal('LifetimeVIP', 249)">Get Lifetime Access</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2 class="section-title">Why Choose Our Signals</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-search-dollar"></i>
+                    </div>
+                    <h3 class="feature-title">Early Gem Detection</h3>
+                    <p class="feature-description">Our team uses advanced algorithms and on-chain monitoring to find profitable meme coins before they go viral.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Smart Contract Verification</h3>
+                    <p class="feature-description">Every signal is verified to ensure the token contract is safe and free from honeypots or rug-pull mechanisms.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="feature-title">Profit-focused Analysis</h3>
+                    <p class="feature-description">Clear entry and exit points with technical analysis to maximize your profit potential on every trade.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <h3 class="feature-title">Whale Movement Insights</h3>
+                    <p class="feature-description">Get alerted when large holders make significant moves that could affect token price, giving you an advantage.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="feature-title">Community Support</h3>
+                    <p class="feature-description">Join a community of like-minded traders and get support from experienced team members when you need it.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h3 class="feature-title">Educational Resources</h3>
+                    <p class="feature-description">Learn how to trade effectively with our guides and resources designed specifically for Solana meme coins.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Section -->
+    <section class="trust-section" id="trust">
+        <div class="container">
+            <h2 class="section-title">Proven Track Record</h2>
+            <div class="trust-metrics">
+                <div class="metric">
+                    <div class="metric-value">2,500+</div>
+                    <div class="metric-label">Members</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">87%</div>
+                    <div class="metric-label">Signal Accuracy</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">142</div>
+                    <div class="metric-label">Signals This Month</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">4.8/5</div>
+                    <div class="metric-label">Member Satisfaction</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials" id="testimonials">
+        <div class="container">
+            <h2 class="section-title">What Our Members Say</h2>
+            <div class="testimonial-grid">
+                <div class="testimonial-card">
+                    <p class="testimonial-text">The signals from this group are incredible. I've made back my membership fee 10x over in just two weeks with their BONK call alone!</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">JD</div>
+                        <div class="author-info">
+                            <div class="author-name">John Doe</div>
+                            <div class="author-title">Member since Jan 2025</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-quote-right quote-icon"></i>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-text">What sets this group apart is the quality of analysis. They don't just tell you what to buy - they explain why, when to enter, and when to exit.</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">AS</div>
+                        <div class="author-info">
+                            <div class="author-name">Alice Smith</div>
+                            <div class="author-title">VIP Member</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-quote-right quote-icon"></i>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-text">After trying several signal groups, this is the only one I've stuck with. Consistent profits and a supportive community make it worth every penny.</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">MJ</div>
+                        <div class="author-info">
+                            <div class="author-name">Mike Johnson</div>
+                            <div class="author-title">Member since Feb 2025</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-quote-right quote-icon"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section" id="faq">
+        <div class="container">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <div class="faq-container">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        How do I join after payment? <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        After completing your payment, you'll receive an email with a private Telegram invite link within 30 minutes. Click the link to join our exclusive signal group. If you don't receive the link, contact our support team via email.
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        How many signals do you send per week? <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        We typically send 5-10 high-quality signals per week. We focus on quality over quantity, ensuring each signal has been thoroughly vetted and has strong profit potential.
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        What's the average profit per signal? <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        Our historical average is 120-200% per successful signal, but results can vary widely. Some signals have yielded 500%+ returns, while others might only reach 30-50%.
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        Can I cancel my subscription? <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        Yes, you can cancel your subscription at any time. You'll maintain access until the end of your billing period. To cancel, simply contact our support team via email or Telegram.
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        What makes your signals better than others? <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        We combine on-chain analysis, smart contract verification, technical analysis, and insider information to ensure our signals have the highest probability of success. Our team has years of experience specifically in Solana meme coins.
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        How much should I invest per signal? <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        We recommend only investing what you can afford to lose, typically 1-5% of your trading portfolio per signal. Never invest more than you're comfortable losing in high-risk meme coins.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <i class="fab fa-telegram"></i>
+                    <span>MoonScanner Signals</span>
+                </div>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Refund Policy</a>
+                    <a href="#">Contact</a>
+                </div>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-telegram"></i></a>
+                    <a href="#"><i class="fab fa-discord"></i></a>
+                    <a href="#"><i class="fab fa-medium"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // FAQ Accordion functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const faqItems = document.querySelectorAll('.faq-item');
+            
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question');
+                
+                question.addEventListener('click', () => {
+                    // Close all other items
+                    faqItems.forEach(otherItem => {
+                        if (otherItem !== item && otherItem.classList.contains('active')) {
+                            otherItem.classList.remove('active');
+                        }
+                    });
+                    
+                    // Toggle current item
+                    item.classList.toggle('active');
+                });
+            });
+            
+            // Add floating coins dynamically
+            const floatingElements = document.querySelector('.floating-elements');
+            for (let i = 0; i < 10; i++) {
+                const coin = document.createElement('div');
+                coin.classList.add('floating-coin');
+                coin.style.left = `${Math.random() * 100}%`;
+                coin.style.top = `${Math.random() * 100}%`;
+                coin.style.width = `${Math.random() * 30 + 10}px`;
+                coin.style.height = coin.style.width;
+                coin.style.animationDuration = `${Math.random() * 20 + 15}s`;
+                coin.style.animationDelay = `${Math.random() * 10}s`;
+                floatingElements.appendChild(coin);
+            }
+        });
+        
+        // Payment modal functionality
+        function showPaymentModal(plan, price) {
+            const modal = document.getElementById('payment-modal');
+            const planElement = document.getElementById('selected-plan');
+            const priceElement = document.getElementById('selected-price');
+            const planInput = document.getElementById('plan-input');
+            
+            planElement.textContent = plan;
+            priceElement.textContent = `${price}`;
+            planInput.value = plan;
+            
+            modal.style.display = 'flex';
+            
+            return false; // Prevent default link behavior
+        }
+        
+        function closePaymentModal() {
+            const modal = document.getElementById('payment-modal');
+            modal.style.display = 'none';
+        }
+        
+        function processPayment() {
+            // This would connect to your smart contract
+            alert('Payment processing is being implemented. Please check back soon!');
+            closePaymentModal();
+        }
+        
+        // Close modal if clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('payment-modal');
+            if (event.target == modal) {
+                closePaymentModal();
+            }
+        }
+    </script>
+</body>
+</html>
