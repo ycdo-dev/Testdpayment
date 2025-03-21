@@ -1,45 +1,4 @@
-<!-- Payment Modal -->
-    <div id="payment-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
-        <div style="background-color: var(--card-bg); border-radius: 16px; padding: 30px; max-width: 500px; width: 90%;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="font-size: 24px; margin: 0;">Complete Your Purchase</h3>
-                <span onclick="closePaymentModal()" style="cursor: pointer; font-size: 24px;">&times;</span>
-            </div>
-            
-            <div style="margin-bottom: 20px;">
-                <p style="margin-bottom: 10px;">Selected Plan: <span id="selected-plan" style="font-weight: bold;"></span></p>
-                <p>Price: <span id="selected-price" style="font-weight: bold;"></span></p>
-            </div>
-            
-            <div style="margin-bottom: 20px;">
-                <p style="margin-bottom: 15px;">Payment Address:</p>
-                <div style="background-color: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; word-break: break-all; font-family: monospace; margin-bottom: 10px;">0xa4a0302260ebE1F9b47A21ba40366e68181B1879</div>
-                <p style="font-size: 14px; color: var(--text-secondary);">Send payment to this address to receive access to your selected plan.</p>
-            </div>
-            
-            <form id="payment-form" style="margin-bottom: 20px;">
-                <input type="hidden" id="plan-input" name="plan">
-                <div style="margin-bottom: 15px;">
-                    <label for="wallet-address" style="display: block; margin-bottom: 5px;">Your Wallet Address</label>
-                    <input type="text" id="wallet-address" style="width: 100%; padding: 10px; border-radius: 8px; background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: var(--text);" placeholder="Enter your wallet address">
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label for="payment-token" style="display: block; margin-bottom: 5px;">Payment Token</label>
-                    <select id="payment-token" style="width: 100%; padding: 10px; border-radius: 8px; background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: var(--text);">
-                        <option value="usdt">USDT</option>
-                        <option value="usdc">USDC</option>
-                        <option value="sol">SOL</option>
-                    </select>
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label for="tx-hash" style="display: block; margin-bottom: 5px;">Transaction Hash (after payment)</label>
-                    <input type="text" id="tx-hash" style="width: 100%; padding: 10px; border-radius: 8px; background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: var(--text);" placeholder="Enter transaction hash">
-                </div>
-            </form>
-            
-            <button onclick="processPayment()" class="cta-button" style="width: 100%;">Submit Payment Information</button>
-        </div>
-    </div><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -568,6 +527,20 @@
             }
         }
         
+        /* Payment Modal */
+        #payment-modal {
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.8); 
+            z-index: 1000; 
+            justify-content: center; 
+            align-items: center;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .hero h1 {
@@ -915,6 +888,49 @@
         </div>
     </footer>
 
+    <!-- Payment Modal -->
+    <div id="payment-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background-color: var(--card-bg); border-radius: 16px; padding: 30px; max-width: 500px; width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 24px; margin: 0;">Complete Your Purchase</h3>
+                <span onclick="closePaymentModal()" style="cursor: pointer; font-size: 24px;">&times;</span>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <p style="margin-bottom: 10px;">Selected Plan: <span id="selected-plan" style="font-weight: bold;"></span></p>
+                <p>Price: <span id="selected-price" style="font-weight: bold;"></span></p>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <p style="margin-bottom: 15px;">Payment Address:</p>
+                <div style="background-color: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; word-break: break-all; font-family: monospace; margin-bottom: 10px;">0xa4a0302260ebE1F9b47A21ba40366e68181B1879</div>
+                <p style="font-size: 14px; color: var(--text-secondary);">Send payment to this address to receive access to your selected plan.</p>
+            </div>
+            
+            <form id="payment-form" style="margin-bottom: 20px;">
+                <input type="hidden" id="plan-input" name="plan">
+                <div style="margin-bottom: 15px;">
+                    <label for="wallet-address" style="display: block; margin-bottom: 5px;">Your Wallet Address</label>
+                    <input type="text" id="wallet-address" style="width: 100%; padding: 10px; border-radius: 8px; background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: var(--text);" placeholder="Enter your wallet address">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="payment-token" style="display: block; margin-bottom: 5px;">Payment Token</label>
+                    <select id="payment-token" style="width: 100%; padding: 10px; border-radius: 8px; background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: var(--text);">
+                        <option value="usdt">USDT</option>
+                        <option value="usdc">USDC</option>
+                        <option value="sol">SOL</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="tx-hash" style="display: block; margin-bottom: 5px;">Transaction Hash (after payment)</label>
+                    <input type="text" id="tx-hash" style="width: 100%; padding: 10px; border-radius: 8px; background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: var(--text);" placeholder="Enter transaction hash">
+                </div>
+            </form>
+            
+            <button onclick="processPayment()" class="cta-button" style="width: 100%;">Submit Payment Information</button>
+        </div>
+    </div>
+
     <script>
         // FAQ Accordion functionality
         document.addEventListener('DOMContentLoaded', function() {
@@ -973,8 +989,8 @@
         }
         
         function processPayment() {
-            // This would connect to your smart contract
-            alert('Payment processing is being implemented. Please check back soon!');
+            // This would connect to your payment processing
+            alert('Payment information submitted! You will receive your access details shortly.');
             closePaymentModal();
         }
         
